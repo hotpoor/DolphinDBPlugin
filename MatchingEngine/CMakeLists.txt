@@ -22,31 +22,30 @@ endif ()
 if (TEST)
     include(GoogleTest)
     link_libraries(gtest gtest_main)
-    add_executable(${PROJECT_NAME} ./book/test.cpp)
+    add_executable(MatchingEngineTest ./book/test.cpp)
     target_link_libraries(
-            ${PROJECT_NAME}
+            MatchingEngineTest
             PUBLIC
             gtest
             gtest_main
             pthread)
-    gtest_discover_tests(${PROJECT_NAME})
-else()
-    add_definitions(-DLOGGING_LEVEL_1 -D_GLIBCXX_USE_CXX11_ABI=0)
-    include_directories(${DOLPHINDB_INC_DIR})
-    link_directories(${DOLPHINDB_LIB_DIR})
-    link_libraries(DolphinDB)
-    aux_source_directory(. SOURCE)
-    add_library(${PROJECT_NAME} SHARED ${SOURCE})
-    target_link_libraries(
-            ${PROJECT_NAME}
-            PUBLIC
-            DolphinDB
-            pthread
-            dl)
-endif()
+    gtest_discover_tests(MatchingEngineTest)
+endif ()
 
+add_definitions(-DLOGGING_LEVEL_1)
+include_directories(${DOLPHINDB_INC_DIR})
+link_directories(${DOLPHINDB_LIB_DIR})
+aux_source_directory(. SOURCE)
+add_library(MatchingEngine SHARED ${SOURCE})
+target_link_libraries(
+        MatchingEngine
+        PUBLIC
+        DolphinDB
+        pthread
+        dl)
+target_compile_definitions(MatchingEngine PRIVATE -D_GLIBCXX_USE_CXX11_ABI=0)
 install(
-        TARGETS ${PROJECT_NAME}
+        TARGETS MatchingEngine
         DESTINATION ${PROJECT_SOURCE_DIR}
         CONFIGURATIONS Debug
 )

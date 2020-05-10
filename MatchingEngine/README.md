@@ -103,7 +103,8 @@ MatchingEngine::setupGlobalConfig(inputScheme, , pricePrecision, bookDepth)
  */
 sym = 'AAPL'
 output = table(10000:0,`symbol`id`status`condition`quantity`filledQuantity`cost, [SYMBOL,LONG,STRING,INT,LONG,LONG,DOUBLE])
-exchange = MatchingEngine::createExchange(sym, output)
+depthOutput = table(10000:0,`is_sell`level`price`aggregate_qty`order_count`market_price,[BOOL,INT,LONG,LONG,LONG,LONG])
+exchange = MatchingEngine::createExchange(sym, output,depthOutput)
 
 /*
  * insert into the object returned by createExchange to see the output

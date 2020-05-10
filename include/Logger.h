@@ -49,22 +49,29 @@ private:
 
 class Logger {
 public:
-	Logger(){}
+	Logger() :  level_(INFO){}
 	~Logger(){}
 	bool start(const string& fileName, long long sizeLimit);
 	void stop();
+	void setLogLevel(severity_type level) { level_ = level;}
 
 	template<severity_type severity , typename...Args>
 	void print(Args...args ){
 		stringstream stream;
 		switch( severity ){
 			case severity_type::DEBUG:
+				if(level_ > DEBUG)
+					return;
 				stream<<"<DEBUG> :";
 				break;
 			case severity_type::INFO:
+				if(level_ > INFO)
+					return;
 				stream<<"<INFO> :";
 				break;
 			case severity_type::WARNING:
+				if(level_ > WARNING)
+					return;
 				stream<<"<WARNING> :";
 				break;
 			case severity_type::ERR:
@@ -86,24 +93,30 @@ private:
 	string getTime();
 
 private:
+	severity_type level_;
 	SmartPointer<BlockingBoundlessQueue<string>> buffer_;
 	ThreadSP thread_;
 };
 
 extern Logger log_inst;
 
-#ifdef LOGGING_LEVEL_1
-	#define LOG log_inst.print<severity_type::DEBUG>
-	#define LOG_ERR log_inst.print<severity_type::ERR>
-	#define LOG_INFO log_inst.print<severity_type::INFO>
-	#define LOG_WARN log_inst.print<severity_type::WARNING>
-#endif
+#ifdef VERBOSE_LOGGING
+#include <cstring>
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define XLOG log_inst.print<severity_type::DEBUG>
+#define XLOG_ERR log_inst.print<severity_type::ERR>
+#define XLOG_INFO log_inst.print<severity_type::INFO>
+#define XLOG_WARN log_inst.print<severity_type::WARNING>
 
-#ifdef LOGGING_LEVEL_2
-	#define LOG(...)
-	#define LOG_ERR log_inst.print<severity_type::ERR>
-	#define LOG_INFO log_inst.print<severity_type::INFO>
-	#define LOG_WARN log_inst.print<severity_type::WARNING>
+#define LOG(...) XLOG("[", __FILENAME__, ":", __LINE__, "] ", __VA_ARGS__)
+#define LOG_ERR(...) XLOG_ERR("[", __FILENAME__, ":", __LINE__, "] ", __VA_ARGS__)
+#define LOG_INFO(...) XLOG_INFO("[", __FILENAME__, ":", __LINE__, "] ", __VA_ARGS__)
+#define LOG_WARN(...) XLOG_WARN("[", __FILENAME__, ":", __LINE__, "] ", __VA_ARGS__)
+#else
+#define LOG log_inst.print<severity_type::DEBUG>
+#define LOG_ERR log_inst.print<severity_type::ERR>
+#define LOG_INFO log_inst.print<severity_type::INFO>
+#define LOG_WARN log_inst.print<severity_type::WARNING>
 #endif
 
 

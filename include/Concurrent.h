@@ -125,8 +125,9 @@ template<class T>
 class LockGuard{
 public:
 	LockGuard(T* res, bool acquireLock = true):res_(res){
-		if(acquireLock)
-			res_->lock();
+		if(acquireLock && res_ != NULL) {
+            res_->lock();
+		}
 	}
 
 	void unlock(){
@@ -136,7 +137,14 @@ public:
 		}
 	}
 
-	~LockGuard(){
+	void relock(T* res) {
+		if (res) {
+			res_ = res;
+			res->lock();
+		}
+	}
+
+    ~LockGuard(){
 		if(res_ != NULL)
 			res_->unlock();
 	}
@@ -402,6 +410,18 @@ public:
 		return true;
 	}
 
+	void blockingPop(std::vector<T>& container, int n){
+		LockGuard<Mutex> guard(&mutex_);
+		while(items_.empty())
+			empty_.wait(mutex_);
+		int count = std::min((int)items_.size(), n);
+		while(count>0){
+			container.push_back(items_.front());
+			items_.pop();
+			--count;
+		}
+	}
+
 	int size(){
 		LockGuard<Mutex> guard(&mutex_);
 		return items_.size();
@@ -608,6 +628,7 @@ public:
 	~Thread();
 	void start();
 	void join();
+	void detach();
 	void cancel();
 	bool isRunning(){return run_.isNull() ? false : run_->isRunning();}
 	bool isComplete() {return run_.isNull()? false : run_->isComplete();}
@@ -618,11 +639,7 @@ public:
 	static bool yield();
 
 private:
-	static void* startFunc(void* data){
-		((Thread*)data)->run_->start();
-		return data;
-	}
-
+	static void* startFunc(void* data);
 	RunnableSP run_;
 #ifdef WINDOWS
 	HANDLE thread_;
